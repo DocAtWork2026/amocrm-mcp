@@ -51,11 +51,13 @@ async def get_account_info() -> str:
 # ===================== СДЕЛКИ (LEADS) =====================
 
 @mcp.tool()
-async def get_leads(page: int = 1, limit: int = 50, query: str = "") -> str:
-    """Получить список сделок (лидов). query — поиск по названию."""
+async def get_leads(page: int = 1, limit: int = 50, query: str = "", order_by: str = "", order_dir: str = "desc") -> str:
+    """Получить список сделок (лидов). query — поиск по названию. order_by — поле сортировки (created_at, updated_at, id). order_dir — направление (asc/desc)."""
     params = {"page": page, "limit": limit}
     if query:
         params["query"] = query
+    if order_by:
+        params[f"order[{order_by}]"] = order_dir
     data = await api_get("/leads", params=params)
     return json.dumps(data, ensure_ascii=False, indent=2)
 
@@ -98,11 +100,13 @@ async def update_lead(lead_id: int, name: str = "", price: int = -1, status_id: 
 # ===================== КОНТАКТЫ =====================
 
 @mcp.tool()
-async def get_contacts(page: int = 1, limit: int = 50, query: str = "") -> str:
-    """Получить список контактов. query — поиск по имени/телефону/email."""
+async def get_contacts(page: int = 1, limit: int = 50, query: str = "", order_by: str = "", order_dir: str = "desc") -> str:
+    """Получить список контактов. query — поиск по имени/телефону/email. order_by — поле сортировки (created_at, updated_at, id). order_dir — направление (asc/desc)."""
     params = {"page": page, "limit": limit}
     if query:
         params["query"] = query
+    if order_by:
+        params[f"order[{order_by}]"] = order_dir
     data = await api_get("/contacts", params=params)
     return json.dumps(data, ensure_ascii=False, indent=2)
 
@@ -134,11 +138,13 @@ async def create_contact(first_name: str, last_name: str = "", phone: str = "", 
 # ===================== КОМПАНИИ =====================
 
 @mcp.tool()
-async def get_companies(page: int = 1, limit: int = 50, query: str = "") -> str:
-    """Получить список компаний. query — поиск по названию."""
+async def get_companies(page: int = 1, limit: int = 50, query: str = "", order_by: str = "", order_dir: str = "desc") -> str:
+    """Получить список компаний. query — поиск по названию. order_by — поле сортировки (created_at, updated_at, id). order_dir — направление (asc/desc)."""
     params = {"page": page, "limit": limit}
     if query:
         params["query"] = query
+    if order_by:
+        params[f"order[{order_by}]"] = order_dir
     data = await api_get("/companies", params=params)
     return json.dumps(data, ensure_ascii=False, indent=2)
 
@@ -160,9 +166,12 @@ async def create_company(name: str) -> str:
 # ===================== ЗАДАЧИ =====================
 
 @mcp.tool()
-async def get_tasks(page: int = 1, limit: int = 50) -> str:
-    """Получить список задач."""
-    data = await api_get("/tasks", params={"page": page, "limit": limit})
+async def get_tasks(page: int = 1, limit: int = 50, order_by: str = "", order_dir: str = "desc") -> str:
+    """Получить список задач. order_by — поле сортировки (created_at, updated_at, id, complete_till). order_dir — направление (asc/desc)."""
+    params = {"page": page, "limit": limit}
+    if order_by:
+        params[f"order[{order_by}]"] = order_dir
+    data = await api_get("/tasks", params=params)
     return json.dumps(data, ensure_ascii=False, indent=2)
 
 
