@@ -51,8 +51,8 @@ async def get_account_info() -> str:
 # ===================== СДЕЛКИ (LEADS) =====================
 
 @mcp.tool()
-async def get_leads(page: int = 1, limit: int = 50, query: str = "", order_by: str = "", order_dir: str = "desc") -> str:
-    """Получить список сделок (лидов). query — поиск по названию. order_by — поле сортировки (created_at, updated_at, id). order_dir — направление (asc/desc)."""
+async def get_leads(page: int = 1, limit: int = 50, query: str = "", order_by: str = "updated_at", order_dir: str = "desc") -> str:
+    """Получить список сделок (лидов). query — поиск по названию. order_by — поле сортировки (created_at, updated_at, id). order_dir — направление (asc/desc). По умолчанию сортировка по updated_at desc (свежие первыми)."""
     params = {"page": page, "limit": limit}
     if query:
         params["query"] = query
@@ -100,8 +100,8 @@ async def update_lead(lead_id: int, name: str = "", price: int = -1, status_id: 
 # ===================== КОНТАКТЫ =====================
 
 @mcp.tool()
-async def get_contacts(page: int = 1, limit: int = 50, query: str = "", order_by: str = "", order_dir: str = "desc") -> str:
-    """Получить список контактов. query — поиск по имени/телефону/email. order_by — поле сортировки (created_at, updated_at, id). order_dir — направление (asc/desc)."""
+async def get_contacts(page: int = 1, limit: int = 50, query: str = "", order_by: str = "updated_at", order_dir: str = "desc") -> str:
+    """Получить список контактов. query — поиск по имени/телефону/email. order_by — поле сортировки (created_at, updated_at, id). order_dir — направление (asc/desc). По умолчанию сортировка по updated_at desc (свежие первыми)."""
     params = {"page": page, "limit": limit}
     if query:
         params["query"] = query
@@ -138,8 +138,8 @@ async def create_contact(first_name: str, last_name: str = "", phone: str = "", 
 # ===================== КОМПАНИИ =====================
 
 @mcp.tool()
-async def get_companies(page: int = 1, limit: int = 50, query: str = "", order_by: str = "", order_dir: str = "desc") -> str:
-    """Получить список компаний. query — поиск по названию. order_by — поле сортировки (created_at, updated_at, id). order_dir — направление (asc/desc)."""
+async def get_companies(page: int = 1, limit: int = 50, query: str = "", order_by: str = "updated_at", order_dir: str = "desc") -> str:
+    """Получить список компаний. query — поиск по названию. order_by — поле сортировки (created_at, updated_at, id). order_dir — направление (asc/desc). По умолчанию сортировка по updated_at desc (свежие первыми)."""
     params = {"page": page, "limit": limit}
     if query:
         params["query"] = query
@@ -166,8 +166,8 @@ async def create_company(name: str) -> str:
 # ===================== ЗАДАЧИ =====================
 
 @mcp.tool()
-async def get_tasks(page: int = 1, limit: int = 50, order_by: str = "", order_dir: str = "desc") -> str:
-    """Получить список задач. order_by — поле сортировки (created_at, updated_at, id, complete_till). order_dir — направление (asc/desc)."""
+async def get_tasks(page: int = 1, limit: int = 50, order_by: str = "updated_at", order_dir: str = "desc") -> str:
+    """Получить список задач. order_by — поле сортировки (created_at, updated_at, id, complete_till). order_dir — направление (asc/desc). По умолчанию сортировка по updated_at desc (свежие первыми)."""
     params = {"page": page, "limit": limit}
     if order_by:
         params[f"order[{order_by}]"] = order_dir
