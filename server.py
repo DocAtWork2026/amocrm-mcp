@@ -8,7 +8,19 @@ AMOCRM_DOMAIN = os.environ.get("AMOCRM_DOMAIN", "")
 AMOCRM_TOKEN = os.environ.get("AMOCRM_TOKEN", "")
 BASE_URL = f"https://{AMOCRM_DOMAIN}.amocrm.ru/api/v4"
 
-mcp = FastMCP("amoCRM")
+# Секретный путь для удалённого доступа (защита "через неизвестность" —
+# сервер публично доступен в интернете, поэтому эндпоинт не должен быть
+# угадываемым). Значение задаётся переменной окружения MCP_SECRET_PATH
+# при деплое на хостинг.
+MCP_SECRET_PATH = os.environ.get("MCP_SECRET_PATH", "mcp")
+PORT = int(os.environ.get("PORT", "8000"))
+
+mcp = FastMCP(
+    "amoCRM",
+    host="0.0.0.0",
+    port=PORT,
+    streamable_http_path=f"/{MCP_SECRET_PATH}",
+)
 
 
 def get_headers():
@@ -19,21 +31,21 @@ def get_headers():
 
 
 async def api_get(path: str, params: dict = None) -> dict:
-    async with httpx.AsyncClient(verify=False) as client:
+    async with httpx.AsyncClient() as client:
         resp = await client.get(f"{BASE_URL}{path}", headers=get_headers(), params=params)
         resp.raise_for_status()
         return resp.json()
 
 
 async def api_post(path: str, data: dict) -> dict:
-    async with httpx.AsyncClient(verify=False) as client:
+    async with httpx.AsyncClient() as client:
         resp = await client.post(f"{BASE_URL}{path}", headers=get_headers(), json=data)
         resp.raise_for_status()
         return resp.json()
 
 
 async def api_patch(path: str, data: dict) -> dict:
-    async with httpx.AsyncClient(verify=False) as client:
+    async with httpx.AsyncClient() as client:
         resp = await client.patch(f"{BASE_URL}{path}", headers=get_headers(), json=data)
         resp.raise_for_status()
         return resp.json()
@@ -66,6 +78,38 @@ async def get_leads(page: int = 1, limit: int = 50, query: str = "", order_by: s
 async def get_lead(lead_id: int) -> str:
     """Получить детали конкретной сделки по ID."""
     data = await api_get(f"/leads/{lead_id}", params={"with": "contacts,catalog_elements,loss_reason"})
+    return json.dumps(data, ensure_ascii=False, indent=2)
+
+
+@mcp.tool()
+async def get_lead_tags(page: int = 1, limit: int = 250) -> str:
+    """Получить список всех тегов сделок с их ID (нужно, чтобы потом фильтровать search_leads по tag_ids)."""
+    data = await api_get("/leads/tags", params={"page": page, "limit": limit})
+    return json.dumps(data, ensure_ascii=False, indent=2)
+
+
+@mcp.tool()
+async def search_leads(pipeline_id: int = 0, status_id: int = 0, tag_ids: str = "", page: int = 1, limit: int = 50, order_by: str = "id", order_dir: str = "asc") -> str:
+    """Поиск сделок с фильтрами по воронке/этапу/тегам (гораздо эффективнее, чем листать get_leads постранично).
+    pipeline_id — ID воронки (см. get_pipelines). status_id — ID этапа внутри воронки (см. get_pipelines).
+    tag_ids — ID тегов через запятую, сделка должна иметь ХОТЯ БЫ ОДИН из них (ID тегов см. в get_lead_tags).
+    Комбинирует все переданные фильтры через И (AND): например pipeline_id + status_id + tag_ids вернёт
+    только сделки, которые одновременно в этой воронке, на этом этапе и с одним из этих тегов."""
+    params = {"page": page, "limit": limit}
+    if pipeline_id:
+        params["filter[pipeline_id]"] = pipeline_id
+    if status_id:
+        params["filter[statuses][0][status_id]"] = status_id
+        if pipeline_id:
+            params["filter[statuses][0][pipeline_id]"] = pipeline_id
+    if tag_ids:
+        for i, t in enumerate(tag_ids.split(",")):
+            t = t.strip()
+            if t:
+                params[f"filter[tags_ids][{i}]"] = t
+    if order_by:
+        params[f"order[{order_by}]"] = order_dir
+    data = await api_get("/leads", params=params)
     return json.dumps(data, ensure_ascii=False, indent=2)
 
 
@@ -229,4 +273,4 @@ async def get_notes(entity_type: str, entity_id: int) -> str:
 
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    mcp.run(transport="streamable-http")
